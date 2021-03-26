@@ -1,0 +1,12 @@
+*.pdb
+~$*
+__pycache__
+obj
+.objs
+bin
+.vs
+Client/UnityProject/Library
+Client/UnityProject/Temp
+Client/UnityProject/Logs
+Client/UnityProject/*.csproj
+Client/UnityProject/*.sln
