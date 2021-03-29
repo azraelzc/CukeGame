@@ -5,6 +5,7 @@ obj
 .objs
 bin
 .vs
+.vsconfig
 Client/UnityProject/Library
 Client/UnityProject/Temp
 Client/UnityProject/Logs
