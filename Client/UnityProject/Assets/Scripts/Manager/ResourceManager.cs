@@ -31,6 +31,13 @@ namespace ZCGame.Manager {
             return AssetBundleManager.LoadSync(path, typeof(T)) as T;
         }
 
+        public static Sprite LoadAtlasSprite(string atlasPath, string atlasName, string spriteName) {
+            atlasPath = atlasPath.ToLower();
+            atlasName = atlasName.ToLower();
+            SpriteAtlas sa = AssetBundleManager.Load(string.Concat(atlasPath, atlasName), typeof(SpriteAtlas)) as SpriteAtlas;
+            return sa.GetSprite(spriteName);
+        }
+
         public static void Unload(Object obj) {
             AssetBundleManager.Release(obj);
         }
