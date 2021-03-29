@@ -14,6 +14,7 @@ namespace ZCGame {
             Application.targetFrameRate = 60;
 
             UIManager.Init();
+            gameObject.AddComponent<ResourceManager>();
             LuaManager.Instance.Init();
             LuaManager.Instance.Start();
 

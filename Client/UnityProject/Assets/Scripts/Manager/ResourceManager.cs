@@ -10,6 +10,8 @@ namespace ZCGame.Manager {
 
         private void Awake() {
             if (Instance == null) {
+                SpriteAtlasManager _saM = new SpriteAtlasManager();
+                _saM.Bind();
                 Instance = this;
             }
         }

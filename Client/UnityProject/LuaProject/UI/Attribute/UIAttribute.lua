@@ -1,13 +1,14 @@
-local M = class("UIMain", UIPanel)
+local M = class("UIAttribute", UIPanel)
 
 local function refreshUI(self)
-	-- print("=Init==",table.tostring(ConfigMgr.GetConfigMap("MapConfig")))
- --    print("=Init111==",table.tostring(ConfigMgr.GetConfigById("UserConfig",1)))
+	
 end
 
 function M:Init()
 	self.super.Init(self)
-    GOUtil.FindChildComponent(self.prefab, "Btn_Bag", "Button").onClick:AddListener( function()
+    local back = self:AddChild(UIDefine.ChildUI.Back)
+    back:SetParent(self.prefab)
+    GOUtil.FindChildComponent(self.prefab, "Button", "Button").onClick:AddListener(function()
         UIMgr.Open(UIDefine.UI.Bag)
     end)
 end

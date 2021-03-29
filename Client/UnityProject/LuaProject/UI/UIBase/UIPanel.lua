@@ -13,7 +13,7 @@ end
 function UIPanel:Create(UI,root,cb)
 	self.UI = UI
 	local prefab = ResourceMgr.LoadSyncPrefab(UI.prefab)
-	print("==Create=",root,prefab)
+	prefab.name = UI.name
 	GOUtil.AttachGameObject(prefab,root)
 	self.prefab = prefab
 	if cb then
@@ -36,7 +36,7 @@ end
 function UIPanel:Enter(param)
 	print("[UI Enter]"..self.UI.name)
 	self.param = param
-	
+	self:Show()
 end
 
 function UIPanel:Update(deltaTime)
@@ -57,6 +57,9 @@ end
 
 function UIPanel:Destroy() 
 	print("[UI Destroy]"..self.UI.name)
+	self:RemoveAllChild()
+	ResourceMgr.Unload(self.prefab)
+    self.prefab = nil
 end
 
 function UIPanel:Show()
@@ -86,5 +89,42 @@ function UIPanel:ClearUICacheData()
 	self.param = nil
 	self.UI.param = nil
 end
+
+--child begin
+function UIPanel:AddChild(UI)
+    local obj = ResourceMgr.LoadSyncPrefab(UI.prefab)
+    obj.name = UI.name
+    local child = require(UI.lua)()
+    child:Init(UI, obj, self)
+    table.insert(self.panelChildren, child)
+    return child
+end
+
+function UIPanel:GetChildPanel(UI)
+    for i = 1, #self.panelChildren do
+        if self.panelChildren[i].UI == UI then
+            return self.panelChildren[i]
+        end
+    end
+    return nil
+end
+
+function UIPanel:RemoveChild(child)
+    for i = 1, #self.panelChildren do
+        if self.panelChildren[i] == child then
+            table.remove(self.panelChildren, i)
+            child:Destroy()
+            break
+        end
+    end
+end
+
+function UIPanel:RemoveAllChild()
+    for i = 1, #self.panelChildren do
+        self.panelChildren[i]:Destroy()
+    end
+    self.panelChildren = { }
+end
+--child end
 
 return UIPanel

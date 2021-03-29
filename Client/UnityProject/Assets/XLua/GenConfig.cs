@@ -58,8 +58,10 @@ public static class ExampleGenConfig {
 
                 //my project
                 typeof(ResourceManager),
+                typeof(SpriteAtlasManager),
                 typeof(UIManager),
                 typeof(GOUtil),
+                typeof(ClickTriggerListener),
             };
 
     //C#静态调用Lua的配置（包括事件的原型），仅可以配delegate，interface

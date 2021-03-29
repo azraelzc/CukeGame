@@ -113,14 +113,6 @@ local function sortingOrderUI(panel,uiType,isShow)
 end
 
 local function completeUI()
-    if curUIStruct.openPanel then
-        if curUIStruct.closePanel then
-            sortingOrderUI(curUIStruct.openPanel,curUIStruct.openPanel.UI.UIType,false)
-            layerAddOrder[curUIStruct.openPanel.UI.UIType] = layerAddOrder[curUIStruct.openPanel.UI.UIType] - 100
-            sortingOrderUI(curUIStruct.openPanel,curUIStruct.openPanel.UI.UIType,true)
-        end 
-        curUIStruct.openPanel:OpenCompele()
-    end
     if curUIStruct.closePanel then
         if curUIStruct.closePanel.UI.clearCacheData then
             curUIStruct.closePanel:ClearUICacheData()
@@ -137,35 +129,24 @@ local function completeUI()
             table.insert(cacheList,curUIStruct.closePanel)
         end
     end
+    if curUIStruct.openPanel then
+        layerAddOrder[curUIStruct.openPanel.UI.UIType] = layerAddOrder[curUIStruct.openPanel.UI.UIType] + 100
+        sortingOrderUI(curUIStruct.openPanel,curUIStruct.openPanel.UI.UIType,true)
+        curUIStruct.openPanel:Enter()
+    end
     curUIStruct = nil
-    LoadingMgr.HideMask()
     M.ExcuteUIStruct()
 end
 
 local function closeUIReady()
-    local count = 1
-    local cb = function()
-        count = count - 1
-        if count <= 0 then
-            completeUI()
-        end
+    if curUIStruct.loadType == UILoadType.Close and curUIStruct.openUI then
+        M.DoOpen(curUIStruct.openUI)
+    else
+        completeUI()
     end
-    if curUIStruct.openPanel then
-        count = count + 1
-        curUIStruct.openPanel:Show()
-        layerAddOrder[curUIStruct.openPanel.UI.UIType] = layerAddOrder[curUIStruct.openPanel.UI.UIType] + 100
-        sortingOrderUI(curUIStruct.openPanel,curUIStruct.openPanel.UI.UIType,true)
-        curUIStruct.openPanel:Enter(curUIStruct.openPanel.UI.param)
-        --curUIStruct.openPanel:PlayEnterAnim(cb)
-    end
-    if curUIStruct.closePanel then
-        count = count + 1
-        --curUIStruct.closePanel:PlayExitAnim(cb)
-    end
-    cb()
 end
 
-local function doClose(UI)
+function M.DoClose(UI)
     local panel = removeUI(UI)
     if panel then
         local cb = function ()
@@ -180,14 +161,14 @@ local function doClose(UI)
 end
 
 local function openUIReady()
-    if curUIStruct.closeUI then
-        doClose(curUIStruct.closeUI)
+    if curUIStruct.loadType == UILoadType.Open and curUIStruct.closeUI then
+        M.DoClose(curUIStruct.closeUI)
     else
-        closeUIReady()
+        completeUI()
     end
 end
 
-local function doOpen(UI)
+function M.DoOpen(UI)
     local panel = M.GetUI(UI)
     if panel == nil then
         panel = getCacheUI(UI)
@@ -197,7 +178,6 @@ local function doOpen(UI)
     end
     if panel == nil then
         panel = require(UI.lua)()
-        print("==UI.UIType==",UI.UIType)
         local root = UIManager.GetLayer(UI.UIType)
         local createCB = function()
             curUIStruct.openPanel = panel
@@ -211,16 +191,20 @@ local function doOpen(UI)
         panel:Register()
         panel:PreEnter(cb)
     end
+    table.insert(panelList,panel)
+    if panel.UI.UIType == UIDefine.UIType.WIN then
+        curWinPanel = panel
+    end
 end
 
-local function excuteUIStruct()
+function M.ExcuteUIStruct()
     if curUIStruct == nil then
         if not loadUIStructQueue:isEmpty()  then
             curUIStruct = loadUIStructQueue:deQueue()
-            if curUIStruct.openUI then
-                doOpen(curUIStruct.openUI)
+            if curUIStruct.loadType == UILoadType.Open then
+                M.DoOpen(curUIStruct.openUI)
             else
-                openUIReady()
+                M.DoClose(curUIStruct.closeUI)
             end
         end
     end
@@ -264,7 +248,14 @@ function M.Open(UI,data)
     struct.loadType = UILoadType.Open
     struct.data = data
     loadUIStructQueue:enQueue(struct)
-    excuteUIStruct()
+    if UI.UIType == UIDefine.UIType.WIN then
+        if curWinPanel and curWinPanel.UI ~= UI then
+            curWinPanel.UI.clearCacheData = false
+            struct.closeUI = curWinPanel.UI
+            winStack:push(curWinPanel.UI)
+        end
+    end
+    M.ExcuteUIStruct()
 end
 
 local function checkStructQueueCloseUI(UI)
@@ -304,7 +295,6 @@ function M.Close(UI,closeNum)
     local struct = {}
     struct.closeUI = UI
     struct.loadType = UILoadType.Close
-    struct.loadState = loadUIState.Start
     loadUIStructQueue:enQueue(struct)
     UI.clearCacheData = true    
     if UI.UIType == UIDefine.UIType.WIN then
@@ -322,6 +312,27 @@ function M.Close(UI,closeNum)
         end
     end
     M.ExcuteUIStruct()
+end
+
+function M.Update(deltaTime)
+    for i=1,#panelList do
+        local panel = panelList[i]
+        if panel then
+            panel:Update(deltaTime)
+        end
+    end
+end
+
+function M.Destroy()
+    for i=1,#panelList do
+        panelList[i]:Destroy()
+    end
+    for i=1,#cacheList do
+        cacheList[i]:Destroy()
+    end
+    panelList = {}
+    cacheList = {}
+    winOrderList = {}
 end
 
 return M
